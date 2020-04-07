@@ -251,53 +251,49 @@ select first_name, salary, commission_pct, nvl(commission_pct, 0),
 		(salary + salary*nvl(commission_pct, 0))*12  연봉조회
 from EMPLOYEES;
 
--- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 고객은 보너스 1000달러 지급,
---                                  급여가 3000달러 이상인 사원은 보너스 1500달러 지급 
---                                                   그 외 사원은 보너스 2000달러 지급하려고 한다.
+-- CASE, DECODE 구하기
+-- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 고객은 보너스 4000 지급,
+-- 급여가 3000달러 이상인 사원은 보너스 3000 지급 
+-- 그 외 사원은 보너스 2000달러 지급하려고 한다.
 -- 사원 아이디, 이름, 급여 , 보너스를 조회하기
-    select employee_id, first_name, salary,
-          CASE
-    	      when salary >= 7000 then 1000
-    	      when salary >= 3000 then 1500
-    	      else 2000
-    	  end bonus
-    from employees
-    where department_id = 50
-    order by employee_id asc; 
-    
-    -- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 사원은 급여 3%인상
-    --  								급여가 3000달러 이상인 사원은 급여 5%인상
-    --                                                    그 외 사원은 급여 7% 인상하려고 한다.
-    -- 사원 아이디, 이름, 급여, 인상된 급여를 조회하기
-    select employee_id, first_name, salary,
-    	 case 
-    		 when salary >= 7000 then salary + trunc(salary*0.03)
-    		 when salary >= 3000 then salary + trunc(salary*0.05)
-    		 else salary + trunc(salary*0.07)
-    		end new_salary
-    from EMPLOYEES
-    where department_id = 50
-    order by employee_id asc;
-    
-    -- 소속부서 아이디가 30, 60, 90번이 사원의 급여를 각각 3%, 5%, 7% 인상하고, 그외 부서는 8% 인상
-    -- 사원아이디, 이름, 부서아이디, 급여, 인상된 급여를 조회하기 
-    select employee_id, first_name, department_id, salary,
-     CASE department_id
-    	 when 30 then salary + trunc(salary*0.03)
-    	 when 60 then salary + trunc(salary*0.03)
-    	 when 90 then salary + trunc(salary*0.03)
-    	 else salary + trunc(salary*0.08)
-    	 end as crease_salary
-    from employees;
-    -- department_id = 30 then salary + trunc(salary*0.03) 도 가능하고 이것이 더 가독성이 높아보인다.
-    
-    
-    -- 소속부서가 50번인 사원은 'A'팀, 80번인 사원은 'B'팀, 나머지는 'C'팀으로 나누려고 한다.
-    -- 사원아이디, 이름 , 소속부서아이디, 소속팀을 조회하고 , 소속팀으로 오름차순 정렬하기
-    select employee_id, first_name, department_id, 
-           decode(department_id, 50, 'A팀',
-                                 80, 'B팀',
-                                 'C팀') as team
-    from EMPLOYEES
-    order by team asc;
-    
+select employee_id, first_name, salary,
+        case
+            when salary >= 7000 then 4000
+            when salary >= 3000 then 3000
+            else 2000
+         end bonus
+from employees
+order by salary desc;
+-- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 사원은 급여 3%인상
+-- 급여가 3000달러 이상인 사원은 급여 5%인상
+-- 그 외 사원은 급여 7% 인상하려고 한다.
+-- 사원 아이디, 이름, 급여, 인상된 급여를 조회하기
+select employee_id, first_name, salary,
+        case
+            when salary >= 7000 then round(salary*1.03,1)
+            when salary >= 4000 then round(salary*1.05,1)
+            else round(salary*1.07,1)
+        end newsalary
+from employees
+where department_id = 50
+order by salary desc;
+
+-- 소속부서 아이디가 30, 60, 90번이 사원의 급여를 각각 3%, 5%, 7% 인상하고, 그외 부서는 8% 인상
+-- 사원아이디, 이름, 부서아이디, 급여, 인상된 급여를 조회하기 
+-- department_id = 30 then salary + trunc(salary*0.03) 도 가능하고 이것이 더 가독성이 높아보인다.
+select employee_id, first_name, department_id, salary, 
+        case
+            when department_id = 30 then salary*1.03
+            when department_id = 60 then salary*1.05
+            when department_id = 90 then salary*1.07
+            else salary*1.08
+        end newsalary
+from employees;
+-- 소속부서가 50번인 사원은 'A'팀, 80번인 사원은 'B'팀, 나머지는 'C'팀으로 나누려고 한다.
+-- 사원아이디, 이름 , 소속부서아이디, 소속팀을 조회하고 , 소속팀으로 오름차순 정렬하기
+
+select employee_id, first_name, department_id,
+        decode (department_id, 50, 'A', 80, 'B', 'C') team
+from employees
+where department_id is not null
+order by team asc;
