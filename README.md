@@ -1,5 +1,6 @@
 # SQL-practice
 Oracle 연습 공간입니다.
+Oracle SQL Developer로 hr 계정에 연결하여 연습합니다.
 ### 연산자
   - 산술연산자
     - +, -, *, /
@@ -19,19 +20,19 @@ Oracle 연습 공간입니다.
 1. 단일행 함수
     - 문자함수
 
-        lower(column or exp)
+        lower(column or exp) -소문자로
 
-        upper(column or exp)
+        upper(column or exp) -대문자로
 
-        substr(column or exp, beginIndex, length)
+        substr(column or exp, beginIndex, length) -java와는 다르다.
 
-        substr(column or exp, beginIndex)
+        substr(column or exp, beginIndex) - 
 
-        concat(column or exp, column or exp)
+        concat(column or exp, column or exp) -두 문자를 합친다.
 
-        length(column or exp)
+        length(column or exp) - 글자수를 반환 공백포함
 
-        instr(column or exp, 'string')
+        instr(column or exp, 'string') -검색된 문자의 index를 반환
 
         instr(column or exp, 'string',beginIndex)
 
@@ -41,7 +42,7 @@ Oracle 연습 공간입니다.
 
         rpad(coloumn or exp, length, 'string')
 
-        trin(column or exp)
+        trim(column or exp) -공백 제거
 
         replace(column or exp, 'search_string', 'replacement_string')
 
