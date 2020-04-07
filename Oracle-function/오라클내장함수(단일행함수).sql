@@ -245,8 +245,213 @@ from dual;
 -- 직원의 이름, 급여, 커미션포인트를 조회하기
 -- 커미션 포인트가 null이면 0으로 표시하기
 
---- 커미션포인트가 적용된 연봉계산하기
+--- nvl 활용 연봉계산하기
 select first_name, salary, commission_pct, nvl(commission_pct, 0),
 		(salary + salary*commission_pct)*12,
 		(salary + salary*nvl(commission_pct, 0))*12  연봉조회
 from EMPLOYEES;
+
+-- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 고객은 보너스 1000달러 지급,
+--                                  급여가 3000달러 이상인 사원은 보너스 1500달러 지급 
+--                                                   그 외 사원은 보너스 2000달러 지급하려고 한다.
+-- 사원 아이디, 이름, 급여 , 보너스를 조회하기
+    select employee_id, first_name, salary,
+          CASE
+    	      when salary >= 7000 then 1000
+    	      when salary >= 3000 then 1500
+    	      else 2000
+    	  end bonus
+    from employees
+    where department_id = 50
+    order by employee_id asc; 
+    
+    -- 50번 부서에 소속된 사원들 중에서 급여가 7000달러 이상인 사원은 급여 3%인상
+    --  								급여가 3000달러 이상인 사원은 급여 5%인상
+    --                                                    그 외 사원은 급여 7% 인상하려고 한다.
+    -- 사원 아이디, 이름, 급여, 인상된 급여를 조회하기
+    select employee_id, first_name, salary,
+    	 case 
+    		 when salary >= 7000 then salary + trunc(salary*0.03)
+    		 when salary >= 3000 then salary + trunc(salary*0.05)
+    		 else salary + trunc(salary*0.07)
+    		end new_salary
+    from EMPLOYEES
+    where department_id = 50
+    order by employee_id asc;
+    
+    -- 소속부서 아이디가 30, 60, 90번이 사원의 급여를 각각 3%, 5%, 7% 인상하고, 그외 부서는 8% 인상
+    -- 사원아이디, 이름, 부서아이디, 급여, 인상된 급여를 조회하기 
+    select employee_id, first_name, department_id, salary,
+     CASE department_id
+    	 when 30 then salary + trunc(salary*0.03)
+    	 when 60 then salary + trunc(salary*0.03)
+    	 when 90 then salary + trunc(salary*0.03)
+    	 else salary + trunc(salary*0.08)
+    	 end as crease_salary
+    from employees;
+    -- department_id = 30 then salary + trunc(salary*0.03) 도 가능하고 이것이 더 가독성이 높아보인다.
+    
+    
+    -- 소속부서가 50번인 사원은 'A'팀, 80번인 사원은 'B'팀, 나머지는 'C'팀으로 나누려고 한다.
+    -- 사원아이디, 이름 , 소속부서아이디, 소속팀을 조회하고 , 소속팀으로 오름차순 정렬하기
+    select employee_id, first_name, department_id, 
+           decode(department_id, 50, 'A팀',
+                                 80, 'B팀',
+                                 'C팀') as team
+    from EMPLOYEES
+    order by team asc;
+    
+    -- 서브쿼리
+    -- Neena와 같은 해에 입사한 사원의 아이디, 이름, 입사일을 조회하기
+    
+    select to_char(hire_date, 'yyyy')
+    from EMPLOYEES
+    where first_name = 'Neena';
+    
+    select employee_id, first_name, hire_date
+    from EMPLOYEES
+    where to_char(hire_date, 'yyyy') = '2005';
+    
+    -- 서브쿼리를 사용해서 조회하기
+    
+    select employee_id, first_name, hire_date
+    from EMPLOYEES
+    where to_char(hire_date, 'yyyy') = (select to_char(hire_date, 'yyyy')
+                                        from employees
+                                        where first_name = 'Neena');
+    -- 전체사원들의 평균급여보다 많은 급여를 받는 사원의 아이디, 이름, 직종, 급여를 조회하기
+    
+    -- 서브쿼리 사용
+    select avg(salary)
+    from employees;
+    select employee_id, first_name, job_id, salary
+    from employees
+    where salary > (select avg(salary)
+    				from employees );
+    				
+    -- Chrisopher와 같은 부서에 일하고, 전체 사원들의 평균급여보다 급여를 많이 받는 사원의 아이디,
+    -- 이름, 급여 부서아이디를 조회하기
+    select employee_id, first_name, salary, department_id
+    from employees 
+    where department_id = (select DEPARTMENT_ID
+    					   from employees
+    					   where first_name = 'Christopher')
+    and salary > (select avg(salary)
+                  from employees);
+                  
+                  
+    -- 90번 부서에 소속된 사원들과 같은해에 입사한 사원을 조회하기
+    select * 
+    from employees
+    where to_char(hire_date,'yyyy') = (select to_char(hire_date, 'yyyy')
+                                       from EMPLOYEES
+                                       where department_id = 90);
+    -- 60번 부서에 소속된 사원의 급여보다 급여를 많이 받는 사원을 조회하기
+    select employee_id, first_name, salary
+    from employees 
+    where salary > any(select salary             -- 연산자 : > any 최소값보다 큰 것
+                       from employees 
+                       where department_id = 60) -- 4200, 4800, 4800, 6000, 9000 (이중하나의 값보다 크기만하면된다.)
+    order by salary asc;
+    
+    select employee_id, first_name, salary
+    from employees 
+    where salary > all(select SALARY            -- 연산자 : > all 최대값보다 큰 것
+                       from employees 
+                       where department_id = 60); -- -- 4200, 4800, 4800, 6000, 9000 (모두에 대해서 커야한다)        
+                       
+    select employee_id, first_name, salary
+    from employees 
+    where salary > any(select min(salary)            -- 연산자 : > any와 동일한 결과가 나온다.
+                       from employees 
+                       where department_id = 60) -- 4200, 4800, 4800, 6000, 9000 
+    order by salary asc;
+    
+    select employee_id, first_name, salary
+    from employees 
+    where salary > any(select max(salary)            -- 연산자 : > all와 동일한 결과가 나온다.
+                       from employees 
+                       where department_id = 60) -- 4200, 4800, 4800, 6000, 9000 
+    order by salary asc;
+    
+    ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    -- 1. 급여를 가장많이 받는 사원의 아이디, 이름, 직종, 급여를 조회하기
+    select employee_id, first_name, job_id, salary
+    from employees 
+    where salary = (select max(salary)
+                    from employees);
+    
+    --2. 80번 부서에 근무하고, 80번 부서의 최저급여를 받는 사원의 아이디,
+    --이름, 직종, 급여, 부서아이디를 조회하기
+    select first_name, job_id, salary, department_id
+    from employees 
+    where department_id = 80
+    and salary = (select min(salary)
+                  from employees
+                  where department_id = 80);
+    
+    --3. Neena가 보고하는 사람, 그 사람이 상사인데 이 상사에게 보고하는 사원의 아이디, 이름,  
+    -- 상사의 아이디, 상사의 이름을 조회하기
+    
+    					
+    SELECT A.EMPLOYEE_ID, A.FIRST_NAME,A.manager_id , B.employee_id, B.first_name
+    from EMPLOYEES A, EMPLOYEES B
+    where A.manager_id = B.employee_id
+    and A.MANAGER_ID = (select MANAGER_ID
+                            from EMPLOYEES
+                            where FIRST_NAME = 'Neena');
+    
+    
+    --4. 전체 사원의 평균급여 2배 이상을 받는 사원의 아이디, 이름, 급여를 조회하기
+    select employee_id, first_name, salary
+    from employees 
+    where salary >= (select avg(salary)
+                     from employees); 
+                  
+    
+    --5. Executive 부서의 모든 사원의 아이디와 이름과 직종, 부서번호를 조회하기 
+    select employee_id, job_id, department_id 
+    from employees 
+    where department_id = (select department_id
+    				       from departments
+    				       where department_name = 'Executive');
+    
+    --6. 전체 사원의 평균급여보다 급여를 많이 받고 , 이름이 'A'로 시작하는 사원의 
+    -- 아이디, 이름, 급여를 조회하기
+    select employee_id, first_name, salary
+    from employees 
+    where first_name like 'A%'
+    and salary > (select avg(salary) from employees );
+    
+    -- 7. Ismael과 같은 해에 입사했고, 같은 부서에 근무하는 사원의 아이디, 이름, 입사일, 부서아이디를
+    -- 조회하기
+    select employee_id, first_name, hire_date,department_id
+    from employees 
+    where to_char(hire_date, 'yyyy') = (select to_char(hire_date, 'yyyy')
+    									from employees 
+    									where first_name = 'Ismael')
+    and department_id = (select department_id
+                         from employees
+                         where first_name = 'Ismael');
+    
+    
+    --8. 'Renske'가 보고하는 사람(상사)와 같은 해에 입사한 사원의 아이디와 이름, 입사일을 조회하기
+    
+    select A.employee_id, A.first_name, A.hire_date
+    from employees A, employees B
+    where B.employee_id = (select manager_id
+    					from employees
+    					where first_name = 'Renske')
+    and to_char(A.hire_date,'yyyy') = to_char(B.hire_date, 'yyyy')
+    order by 1;
+    
+    
+    
+    
+    --9. 사원들의 전체 평균보다 적은 급여를 받는 사원들의 아이디, 이름, 급여, 급여등급을 조회하기
+    select employee_id , first_name, hire_date, salary
+    from employees 
+    where salary < (select avg(salary)
+    				from employees 
+    				);
+				     
