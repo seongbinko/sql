@@ -41,6 +41,7 @@ HOUR	COUNT
 */
 -- level 계층형 쿼리 공부
 -- 코드를 입력하세요
+
 select A.hour, nvl(B.count,0) count
 from
         (select level-1 as hour
